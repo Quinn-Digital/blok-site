@@ -18,6 +18,10 @@
            been used. A custom template (with custom SMTP) can link here directly with
            ?token_hash=...&type=recovery instead: that token is only spent when the form is sent. -->
       <form id="form" class="panel" hidden>
+        <p class="soft" style="margin-top: 0">
+          Changing your password signs you out of Blok on your other devices. Sign in again there
+          with the new one. Your tasks stay on each device and sync again once you do.
+        </p>
         <label for="pw">New password</label>
         <input id="pw" type="password" autocomplete="new-password" minlength="6" required />
         <label for="pw2">Type it again</label>
@@ -32,6 +36,10 @@
       <div id="done" class="panel" hidden>
         <p><strong>Your password has been changed.</strong></p>
         <p class="soft">Go back to Blok and sign in with your new password.</p>
+        <p class="soft">
+          Your other devices will be signed out within the hour. Sign in again on each of them with
+          the new password; their tasks are kept and sync again once you do.
+        </p>
       </div>
 
       <div id="bad" class="panel" hidden>
