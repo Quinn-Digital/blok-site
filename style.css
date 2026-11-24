@@ -1,0 +1,115 @@
+/* Blok's web pages: the app's look (its dark palette, red, 12px corners, Roboto, served from here
+   so no request goes to a font service). Light when the browser asks for light. */
+
+@font-face {
+  font-family: Roboto;
+  src: url(Roboto-400.ttf) format('truetype');
+  font-weight: 400;
+}
+@font-face {
+  font-family: Roboto;
+  src: url(Roboto-700.ttf) format('truetype');
+  font-weight: 700;
+}
+
+:root {
+  --bg: #16181c;
+  --panel: #23272d;
+  --box: #2e333a;
+  --text: #ffffff;
+  --soft: rgba(255, 255, 255, 0.5);
+  --red: #ff6161;
+  --radius: 12px;
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f2f3f5;
+    --panel: #ffffff;
+    --box: #eceef1;
+    --text: #2a2d33;
+    --soft: rgba(42, 45, 51, 0.6);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.55 Roboto, system-ui, sans-serif;
+}
+main {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 32px 20px 64px;
+}
+h1 {
+  font-size: 28px;
+  margin: 8px 0 4px;
+}
+h2 {
+  font-size: 18px;
+  margin: 32px 0 8px;
+}
+p,
+li {
+  margin: 8px 0;
+}
+.soft {
+  color: var(--soft);
+}
+a {
+  color: var(--text);
+}
+.brand {
+  font-weight: 700;
+  text-decoration: none;
+  color: var(--soft);
+}
+.panel {
+  background: var(--panel);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin: 24px 0;
+}
+.narrow {
+  max-width: 400px;
+}
+label {
+  display: block;
+  font-weight: 700;
+  margin: 12px 0 6px;
+}
+input {
+  width: 100%;
+  font: inherit;
+  color: var(--text);
+  background: var(--box);
+  border: 0;
+  border-radius: var(--radius);
+  padding: 10px 12px;
+}
+button {
+  width: 100%;
+  margin-top: 16px;
+  font: inherit;
+  font-weight: 700;
+  color: var(--text);
+  background: var(--box);
+  border: 0;
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  cursor: pointer;
+}
+button:disabled {
+  color: var(--soft);
+  cursor: default;
+}
+.error {
+  color: var(--red);
+}
+[hidden] {
+  display: none !important;
+}

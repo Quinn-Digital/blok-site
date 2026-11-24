@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Confirm your email · Blok</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="narrow">
+      <a class="brand" href="./">Blok</a>
+      <h1>Confirm your email</h1>
+
+      <!-- The sign-up email links here with ?token_hash=...&type=email (the "Confirm signup" email
+           template in Supabase, once "Confirm email" is on). -->
+      <div id="wait" class="panel"><p class="soft">Confirming…</p></div>
+
+      <div id="done" class="panel" hidden>
+        <p><strong>Your email is confirmed.</strong></p>
+        <p class="soft">Go back to Blok and sign in.</p>
+      </div>
+
+      <div id="bad" class="panel" hidden>
+        <p><strong>This link doesn't work.</strong></p>
+        <p class="soft">
+          It may have been used already (then your email is confirmed: just sign in) or have
+          expired. Otherwise, create the account again in Blok to get a new link.
+        </p>
+      </div>
+    </main>
+
+    <script type="module">
+      import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+      import { supaUrl, supaKey } from './config.js';
+
+      const $ = (id) => document.getElementById(id);
+      const q = new URLSearchParams(location.search);
+      const token = q.get('token_hash'), type = q.get('type');
+      const db = createClient(supaUrl, supaKey, {
+        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+      });
+
+      const show = (id) => {
+        $('wait').hidden = true;
+        $(id).hidden = false;
+      };
+      if (!token || !['email', 'signup'].includes(type)) {
+        show('bad');
+      } else {
+        const v = await db.auth.verifyOtp({ token_hash: token, type: 'email' });
+        if (v.error) {
+          show('bad');
+        } else {
+          await db.auth.signOut(); // (the app signs in for itself)
+          show('done');
+        }
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Reset your password · Blok</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="narrow">
+      <a class="brand" href="./">Blok</a>
+      <h1>Reset your password</h1>
+
+      <!-- The reset email links here with ?token_hash=...&type=recovery (the "Reset password"
+           email template in Supabase). The token is only used when the form is sent, so opening
+           the link alone doesn't spend it. -->
+      <form id="form" class="panel" hidden>
+        <label for="pw">New password</label>
+        <input id="pw" type="password" autocomplete="new-password" minlength="6" required />
+        <label for="pw2">Type it again</label>
+        <input id="pw2" type="password" autocomplete="new-password" minlength="6" required />
+        <label class="soft" style="font-weight: 400"
+          ><input id="show" type="checkbox" style="width: auto; margin-right: 8px" />Show password</label
+        >
+        <button id="go" type="submit">Set new password</button>
+        <p id="msg" class="error" hidden></p>
+      </form>
+
+      <div id="done" class="panel" hidden>
+        <p><strong>Your password has been changed.</strong></p>
+        <p class="soft">Go back to Blok and sign in with your new password.</p>
+      </div>
+
+      <div id="bad" class="panel" hidden>
+        <p><strong>This link doesn't work.</strong></p>
+        <p class="soft">
+          It may have been used already or have expired. In Blok, open Account in the menu and use
+          "Forgot password?" again to get a new one.
+        </p>
+      </div>
+    </main>
+
+    <script type="module">
+      import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+      import { supaUrl, supaKey } from './config.js';
+
+      const $ = (id) => document.getElementById(id);
+      const q = new URLSearchParams(location.search);
+      const token = q.get('token_hash');
+      const db = createClient(supaUrl, supaKey, {
+        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+      });
+
+      if (!token || q.get('type') !== 'recovery') {
+        $('bad').hidden = false;
+      } else {
+        $('form').hidden = false;
+      }
+
+      $('show').addEventListener('change', (e) => {
+        $('pw').type = $('pw2').type = e.target.checked ? 'text' : 'password';
+      });
+
+      let verified = false;
+      const fail = (text) => {
+        $('msg').textContent = text;
+        $('msg').hidden = false;
+        $('go').disabled = false;
+      };
+
+      $('form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        $('msg').hidden = true;
+        if ($('pw').value !== $('pw2').value) return fail("The two passwords don't match.");
+        $('go').disabled = true;
+        // The token is spent by the first check; a retry (a password the server turned down) goes on
+        // with the session it gave.
+        if (!verified) {
+          const v = await db.auth.verifyOtp({ token_hash: token, type: 'recovery' });
+          if (v.error) {
+            $('form').hidden = true;
+            $('bad').hidden = false;
+            return;
+          }
+          verified = true;
+        }
+        const u = await db.auth.updateUser({ password: $('pw').value });
+        if (u.error) return fail(u.error.message);
+        await db.auth.signOut();
+        $('form').hidden = true;
+        $('done').hidden = false;
+      });
+    </script>
+  </body>
+</html>
