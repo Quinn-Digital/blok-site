@@ -12,9 +12,11 @@
       <a class="brand" href="./">Blok</a>
       <h1>Reset your password</h1>
 
-      <!-- The reset email links here with ?token_hash=...&type=recovery (the "Reset password"
-           email template in Supabase). The token is only used when the form is sent, so opening
-           the link alone doesn't spend it. -->
+      <!-- The reset email's link (Supabase's default template) passes through Supabase, which
+           sends it here with a short-lived session in the #fragment (access_token, refresh_token,
+           type=recovery: the app asks in the implicit flow), or #error=... if it has expired or
+           been used. A custom template (with custom SMTP) can link here directly with
+           ?token_hash=...&type=recovery instead: that token is only spent when the form is sent. -->
       <form id="form" class="panel" hidden>
         <label for="pw">New password</label>
         <input id="pw" type="password" autocomplete="new-password" minlength="6" required />
@@ -47,22 +49,29 @@
 
       const $ = (id) => document.getElementById(id);
       const q = new URLSearchParams(location.search);
+      const h = new URLSearchParams(location.hash.slice(1));
       const token = q.get('token_hash');
+      const access = h.get('access_token'), refresh = h.get('refresh_token');
       const db = createClient(supaUrl, supaKey, {
         auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
       });
+      history.replaceState(null, '', location.pathname); // the tokens out of the address bar
 
-      if (!token || q.get('type') !== 'recovery') {
-        $('bad').hidden = false;
-      } else {
+      let verified = false;
+      if (access && refresh && h.get('type') === 'recovery') {
+        const s = await db.auth.setSession({ access_token: access, refresh_token: refresh });
+        verified = !s.error;
+      }
+      if (verified || (token && q.get('type') === 'recovery')) {
         $('form').hidden = false;
+      } else {
+        $('bad').hidden = false; // no link, or #error=... (expired or used)
       }
 
       $('show').addEventListener('change', (e) => {
         $('pw').type = $('pw2').type = e.target.checked ? 'text' : 'password';
       });
 
-      let verified = false;
       const fail = (text) => {
         $('msg').textContent = text;
         $('msg').hidden = false;

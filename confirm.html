@@ -12,8 +12,11 @@
       <a class="brand" href="./">Blok</a>
       <h1>Confirm your email</h1>
 
-      <!-- The sign-up email links here with ?token_hash=...&type=email (the "Confirm signup" email
-           template in Supabase, once "Confirm email" is on). -->
+      <!-- The sign-up email's link (once "Confirm email" is on; Supabase's default template)
+           confirms the email at Supabase, then lands here (the app's emailRedirectTo) with
+           ?code=... (nothing more to do), or with error=... (in the query or #fragment) if it had
+           expired or been used. A custom template can link here directly with
+           ?token_hash=...&type=email instead: then this page confirms it. -->
       <div id="wait" class="panel"><p class="soft">Confirming…</p></div>
 
       <div id="done" class="panel" hidden>
@@ -36,16 +39,22 @@
 
       const $ = (id) => document.getElementById(id);
       const q = new URLSearchParams(location.search);
+      const h = new URLSearchParams(location.hash.slice(1));
       const token = q.get('token_hash'), type = q.get('type');
       const db = createClient(supaUrl, supaKey, {
         auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
       });
+      history.replaceState(null, '', location.pathname); // the codes out of the address bar
 
       const show = (id) => {
         $('wait').hidden = true;
         $(id).hidden = false;
       };
-      if (!token || !['email', 'signup'].includes(type)) {
+      if (q.get('error') || h.get('error')) {
+        show('bad');
+      } else if (q.get('code') || h.get('access_token')) {
+        show('done'); // confirmed by Supabase on the way here
+      } else if (!token || !['email', 'signup'].includes(type)) {
         show('bad');
       } else {
         const v = await db.auth.verifyOtp({ token_hash: token, type: 'email' });
